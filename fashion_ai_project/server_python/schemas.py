@@ -15,3 +15,13 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# 로그인 요청
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+# 토큰 응답
+class Token(BaseModel):
+    access_token: str
+    token_type: str

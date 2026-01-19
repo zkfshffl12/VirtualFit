@@ -5,3 +5,7 @@ oracledb==2.5.0
 python-dotenv==1.0.1
 pydantic-settings==2.7.1
 email-validator==2.2.0
+passlib[bcrypt]==1.7.4
+rembg==2.0.72
+pillow>=12.1.0
+python-multipart==0.0.20
