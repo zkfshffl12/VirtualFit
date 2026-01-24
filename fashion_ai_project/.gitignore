@@ -1,0 +1,16 @@
+# 환경 변수 및 비밀번호
+.env
+*.env
+
+# 파이썬 캐시 및 가상환경
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# 실제 업로드된 이미지 (용량이 커서 깃허브엔 안 올리는 게 좋습니다)
+server_python/static/uploads/*
+
+# OS 설정 파일
+.DS_Store
+Thumbs.db

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from datetime import datetime
 
 # 회원데이터 받기
 class UserCreate(BaseModel):
@@ -25,3 +26,14 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+# 옷 정보 응답 형식
+class ClothesResponse(BaseModel):
+    id: int
+    user_id: int
+    image_url: str
+    category: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

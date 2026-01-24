@@ -1,20 +1,33 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from database import get_db, engine
-import models, schemas
-from core.security import get_password_hash
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-from fastapi.security import OAuth2PasswordBearer
-import jwt
 import os
+import uuid
+import jwt
+from datetime import datetime, timedelta
+from typing import List
+
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles
+
+from database import get_db, engine
+import models
+import schemas
+from core.security import get_password_hash
+from core.auth import get_current_user
 
 load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+# 업로드 디렉토리 설정
+UPLOAD_DIR = "uploads/clothes"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # JWT 설정
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
@@ -69,3 +82,46 @@ def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
     # 3. 토큰 생성
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"} 
+
+@app.post("/clothes/upload")
+async def upload_clothing(
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # 이미지 읽기
+    file_content = await file.read()
+    
+    # 파일 저장 (배경 제거 기능은 나중에 추가)
+    file_name = f"{uuid.uuid4()}.png"
+    file_path = os.path.join(UPLOAD_DIR, file_name)
+
+    with open(file_path, "wb") as f:
+        f.write(file_content)
+
+    image_url = f"/static/uploads/{file_name}"
+
+    # DB에 저장
+    new_clothes = models.Clothes(
+        user_id=current_user.id,
+        image_url=image_url,
+        category="미분류"
+    )
+
+    db.add(new_clothes)
+    db.commit()
+    db.refresh(new_clothes)
+
+    return {
+        "message": "인증된 사용자의 옷 등록 완료",
+        "clothes_id": new_clothes.id,
+        "image_url": image_url
+    }
+
+@app.get("/clothes/my", response_model=List[schemas.ClothesResponse])
+def get_my_clothes(
+    current_user: models.User=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    clothes=db.query(models.Clothes).filter(models.Clothes.user_id == current_user.id).all()
+    return clothes
