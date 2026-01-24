@@ -20,9 +20,8 @@ load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # 업로드 디렉토리 설정
